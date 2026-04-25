@@ -1,0 +1,8 @@
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+PyMySQL==1.1.0
+opencv-python==4.8.1.78
+ultralytics==8.0.200
+numpy==1.24.3
+Pillow==10.0.0
+requests==2.31.0
