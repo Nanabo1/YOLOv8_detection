@@ -1,0 +1,722 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* 全屏布局样式 */
+    .detect-container {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 1.5rem;
+        height: calc(100vh - 4rem);
+        min-height: 700px;
+    }
+
+    /* 视频区域 */
+    .video-section {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .video-display {
+        flex: 1;
+        min-height: 0;
+        background: #1a1f35;
+        border-radius: 15px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .video-placeholder {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #1a1f35 0%, #2a2f45 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+    }
+
+    .placeholder-content {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .placeholder-content i {
+        font-size: 5rem;
+        color: rgba(102, 126, 234, 0.5);
+        margin-bottom: 1.5rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.5; }
+        50% { transform: scale(1.1); opacity: 0.8; }
+        100% { transform: scale(1); opacity: 0.5; }
+    }
+
+    .placeholder-content p {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    #video-feed {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #000;
+    }
+
+    /* 统计信息卡片 */
+    .stats-area {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        color: white;
+    }
+
+    .stat-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 1rem;
+    }
+
+    .stat-card h5 {
+        font-size: 1rem;
+        font-weight: 500;
+        opacity: 0.9;
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: bold;
+    }
+
+    /* 控制面板 */
+    .control-section {
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+
+    .control-section h3 {
+        font-size: 1.4rem;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+    }
+
+    .control-group {
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 12px;
+        padding: 1.2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .control-group h4 {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .control-group h4 i {
+        color: var(--primary-color);
+    }
+
+    /* 摄像头选择 */
+    .camera-select {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        font-size: 0.95rem;
+        margin-bottom: 0.8rem;
+        transition: all 0.3s;
+    }
+
+    .camera-select:hover {
+        border-color: var(--primary-color);
+    }
+
+    .camera-option {
+        margin-top: 0.5rem;
+    }
+
+    /* 按钮组 */
+    .button-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 0.8rem;
+        margin-top: 0.8rem;
+    }
+
+    .btn {
+        padding: 0.8rem 1rem;
+        font-size: 0.95rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s;
+        white-space: nowrap;
+    }
+
+    .btn i {
+        font-size: 1rem;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        color: white;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+        color: white;
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        color: white;
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+        color: white;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn:disabled {
+        opacity: 0.5;
+        transform: none;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    /* 文件上传 */
+    .file-input {
+        width: 100%;
+        padding: 0.8rem;
+        border: 2px dashed var(--border-color);
+        border-radius: 10px;
+        background: white;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    /* 文件信息卡片 */
+    .info-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        padding: 1rem;
+        color: white;
+    }
+
+    .info-card p {
+        margin: 0.3rem 0;
+        font-size: 0.9rem;
+    }
+
+    /* 日志区域 */
+    .log-area {
+        background: #1a202c;
+        color: #cbd5e0;
+        border-radius: 10px;
+        padding: 1rem;
+        height: 150px;
+        overflow-y: auto;
+        font-family: 'Consolas', monospace;
+        font-size: 0.85rem;
+        border: 1px solid #2d3748;
+    }
+
+    .log-entry {
+        padding: 0.2rem 0;
+        border-bottom: 1px solid #2d3748;
+    }
+
+    /* 响应式布局 */
+    @media (max-width: 1200px) {
+        .detect-container {
+            grid-template-columns: 1fr 0.9fr;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .detect-container {
+            grid-template-columns: 1fr;
+            height: auto;
+            min-height: auto;
+        }
+
+        .video-section {
+            height: 500px;
+        }
+
+        .control-section {
+            height: auto;
+            max-height: 600px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .video-section {
+            height: 400px;
+        }
+
+        .button-group {
+            grid-template-columns: 1fr;
+        }
+
+        .btn {
+            padding: 0.8rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .video-section {
+            height: 300px;
+        }
+
+        .control-group {
+            padding: 1rem;
+        }
+    }
+
+    /* 自定义滚动条 */
+    .control-section::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .control-section::-webkit-scrollbar-track {
+        background: var(--bg-light);
+        border-radius: 10px;
+    }
+
+    .control-section::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 10px;
+    }
+</style>
+
+<div class="detect-container">
+    <!-- 视频显示区域 -->
+    <div class="video-section">
+        <div class="video-display">
+            <img src="" alt="视频流" id="video-feed" style="display: none;">
+            <div id="video-placeholder" class="video-placeholder">
+                <div class="placeholder-content">
+                    <i class="fas fa-video"></i>
+                    <p>请先上传视频或开启摄像头</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div id="vehicle-count" class="stats-area" style="display: none;">
+            <div class="stat-card">
+                <h5><i class="fas fa-car"></i> 当前检测到的车辆</h5>
+                <div class="stat-value">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 控制区域 -->
+    <div class="control-section">
+        <h3><i class="fas fa-sliders-h"></i> 控制面板</h3>
+
+        <!-- 摄像头选择 -->
+        <div class="control-group">
+            <h4><i class="fas fa-camera"></i> 摄像头选择</h4>
+            <select class="camera-select" id="camera-type">
+                <option value="local">📷 本地摄像头</option>
+                <option value="serial">🔌 串口摄像头</option>
+                <option value="tcp">🌐 TCP/IP摄像头</option>
+            </select>
+
+            <div id="local-camera" class="camera-option">
+                <select class="camera-select" id="local-source">
+                    <option value="0">摄像头 0 (默认)</option>
+                    <option value="1">摄像头 1</option>
+                    <option value="2">摄像头 2</option>
+                </select>
+            </div>
+
+            <div id="serial-camera" class="camera-option" style="display:none;">
+                <select class="camera-select" id="serial-source">
+                    <option value="0">USB摄像头 0</option>
+                    <option value="1">USB摄像头 1</option>
+                </select>
+            </div>
+
+            <div id="tcp-camera" class="camera-option" style="display:none;">
+                <div class="input-group">
+                    <input type="text" id="tcp-source" class="camera-select" placeholder="rtsp://..." value="rtsp://admin:123456@192.168.1.100:554">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-success" onclick="startCamera()">
+                    <i class="fas fa-play"></i> 开启
+                </button>
+                <button class="btn btn-danger" onclick="stopCamera()">
+                    <i class="fas fa-stop"></i> 关闭
+                </button>
+            </div>
+        </div>
+
+        <!-- 文件上传 -->
+        <div class="control-group">
+            <h4><i class="fas fa-upload"></i> 文件上传</h4>
+            <input type="file" class="file-input" id="video-file" accept="video/*" onchange="handleFileSelect(this)">
+            <div class="button-group">
+                <button class="btn btn-info" id="play-video" onclick="playVideo()" disabled>
+                    <i class="fas fa-play"></i> 播放
+                </button>
+                <button class="btn btn-warning" id="pause-video" onclick="pauseVideo()" style="display: none;">
+                    <i class="fas fa-pause"></i> 暂停
+                </button>
+            </div>
+        </div>
+
+        <!-- 检测控制 -->
+        <div class="control-group">
+            <h4><i class="fas fa-search"></i> 检测控制</h4>
+            <div class="button-group">
+                <button class="btn btn-primary" id="start-detection" onclick="startDetection()" disabled>
+                    <i class="fas fa-play"></i> 开始识别
+                </button>
+                <button class="btn btn-warning" id="stop-detection" onclick="stopDetection()" disabled>
+                    <i class="fas fa-stop"></i> 停止识别
+                </button>
+            </div>
+        </div>
+
+        <!-- 当前文件信息 -->
+        <div class="control-group" id="file-info" style="display: none;">
+            <h4><i class="fas fa-info-circle"></i> 当前文件</h4>
+            <div class="info-card">
+                <p><i class="fas fa-file"></i> <span id="file-name"></span></p>
+                <p><i class="fas fa-weight"></i> <span id="file-size"></span></p>
+                <p><i class="fas fa-tag"></i> <span id="file-type"></span></p>
+            </div>
+        </div>
+
+        <!-- 日志区域 -->
+        <div class="control-group">
+            <h4><i class="fas fa-list"></i> 动作日志</h4>
+            <div id="log-area" class="log-area">
+                <!-- 日志将动态显示在这里 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 全局变量
+let currentVideoFile = null;
+let isVideoPlaying = false;
+let isDetecting = false;
+let videoStreamActive = false;
+
+// 切换摄像头类型
+document.getElementById('camera-type').addEventListener('change', function() {
+    const type = this.value;
+    document.querySelectorAll('.camera-option').forEach(el => el.style.display = 'none');
+    document.getElementById(type + '-camera').style.display = 'block';
+});
+
+// 获取摄像头源
+function getCameraSource() {
+    const type = document.getElementById('camera-type').value;
+    if (type === 'local') {
+        return document.getElementById('local-source').value;
+    } else if (type === 'serial') {
+        return document.getElementById('serial-source').value;
+    } else {
+        return document.getElementById('tcp-source').value;
+    }
+}
+
+// 处理文件选择
+function handleFileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    currentVideoFile = file;
+
+    document.getElementById('file-info').style.display = 'block';
+    document.getElementById('file-name').innerHTML = `<strong>文件名:</strong> ${file.name}`;
+    document.getElementById('file-size').innerHTML = `<strong>大小:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+    document.getElementById('file-type').innerHTML = `<strong>类型:</strong> ${file.type || '视频文件'}`;
+
+    document.getElementById('play-video').disabled = false;
+    addLog(`文件已选择: ${file.name}`);
+}
+
+// 播放视频
+function playVideo() {
+    if (!currentVideoFile) {
+        alert('请先选择视频文件');
+        return;
+    }
+
+    addLog('正在加载视频...');
+
+    const formData = new FormData();
+    formData.append('file', currentVideoFile);
+    formData.append('action', 'play');
+
+    fetch('/api/upload_file', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const videoFeed = document.getElementById('video-feed');
+            videoFeed.style.display = 'block';
+            videoFeed.src = '/video_feed?t=' + new Date().getTime();
+            document.getElementById('video-placeholder').style.display = 'none';
+
+            document.getElementById('play-video').style.display = 'none';
+            document.getElementById('pause-video').style.display = 'inline-block';
+            document.getElementById('start-detection').disabled = false;
+
+            isVideoPlaying = true;
+            videoStreamActive = true;
+            addLog('视频开始播放');
+        } else {
+            alert('播放失败: ' + data.message);
+            addLog('播放失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('播放错误:', error);
+        alert('请求失败: ' + error);
+        addLog('播放错误: ' + error);
+    });
+}
+
+// 暂停视频
+function pauseVideo() {
+    document.getElementById('video-feed').src = '';
+    document.getElementById('video-feed').style.display = 'none';
+    document.getElementById('video-placeholder').style.display = 'flex';
+
+    document.getElementById('pause-video').style.display = 'none';
+    document.getElementById('play-video').style.display = 'inline-block';
+    document.getElementById('start-detection').disabled = true;
+    document.getElementById('stop-detection').disabled = true;
+
+    isVideoPlaying = false;
+    videoStreamActive = false;
+
+    if (isDetecting) {
+        stopDetection();
+    }
+
+    addLog('视频已暂停');
+}
+
+// 启动摄像头
+function startCamera() {
+    const type = document.getElementById('camera-type').value;
+    const source = getCameraSource();
+
+    addLog(`正在启动摄像头: ${type} - ${source}`);
+
+    fetch('/api/start_camera', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({type: type, source: source})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const videoFeed = document.getElementById('video-feed');
+            videoFeed.style.display = 'block';
+            videoFeed.src = '/video_feed?t=' + new Date().getTime();
+            document.getElementById('video-placeholder').style.display = 'none';
+
+            document.getElementById('play-video').disabled = true;
+            document.getElementById('start-detection').disabled = false;
+
+            videoStreamActive = true;
+            isVideoPlaying = true;
+            addLog('摄像头启动成功');
+        } else {
+            alert('摄像头启动失败: ' + data.message);
+            addLog('摄像头启动失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('启动摄像头错误:', error);
+        alert('请求失败: ' + error);
+        addLog('启动摄像头错误: ' + error);
+    });
+}
+
+// 停止摄像头
+function stopCamera() {
+    addLog('正在关闭摄像头...');
+
+    fetch('/api/stop_camera', {method: 'POST'})
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('video-feed').style.display = 'none';
+            document.getElementById('video-placeholder').style.display = 'flex';
+            document.getElementById('video-feed').src = '';
+
+            document.getElementById('play-video').disabled = false;
+            document.getElementById('start-detection').disabled = true;
+            document.getElementById('stop-detection').disabled = true;
+
+            videoStreamActive = false;
+            isVideoPlaying = false;
+
+            if (isDetecting) {
+                isDetecting = false;
+            }
+
+            addLog('摄像头已关闭');
+        }
+    })
+    .catch(error => {
+        console.error('停止摄像头错误:', error);
+        addLog('停止摄像头错误: ' + error);
+    });
+}
+
+// 开始检测
+function startDetection() {
+    if (!videoStreamActive) {
+        alert('请先播放视频或开启摄像头');
+        return;
+    }
+
+    addLog('正在启动检测...');
+
+    fetch('/api/start_detection', {method: 'POST'})
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            isDetecting = true;
+            document.getElementById('start-detection').disabled = true;
+            document.getElementById('stop-detection').disabled = false;
+            document.getElementById('vehicle-count').style.display = 'block';
+            addLog('开始识别车辆');
+        } else {
+            alert('启动检测失败: ' + data.message);
+            addLog('启动检测失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('启动检测错误:', error);
+        addLog('启动检测错误: ' + error);
+    });
+}
+
+// 停止检测
+function stopDetection() {
+    addLog('正在停止检测...');
+
+    fetch('/api/stop_detection', {method: 'POST'})
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            isDetecting = false;
+            document.getElementById('start-detection').disabled = false;
+            document.getElementById('stop-detection').disabled = true;
+            addLog('停止识别车辆');
+        }
+    })
+    .catch(error => {
+        console.error('停止检测错误:', error);
+        addLog('停止检测错误: ' + error);
+    });
+}
+
+// 添加日志
+function addLog(message) {
+    const timestamp = new Date().toLocaleTimeString();
+    const logArea = document.getElementById('log-area');
+    const logEntry = document.createElement('div');
+    logEntry.className = 'log-entry';
+    logEntry.textContent = `[${timestamp}] ${message}`;
+    logArea.appendChild(logEntry);
+    logArea.scrollTop = logArea.scrollHeight;
+
+    while (logArea.children.length > 100) {
+        logArea.removeChild(logArea.firstChild);
+    }
+}
+
+// 定期更新日志
+setInterval(() => {
+    fetch('/api/logs')
+        .then(response => response.json())
+        .then(data => {
+            const logArea = document.getElementById('log-area');
+            logArea.innerHTML = data.logs.map(log =>
+                `<div class="log-entry">${log}</div>`
+            ).join('');
+            logArea.scrollTop = logArea.scrollHeight;
+        });
+}, 2000);
+
+// 定期更新检测结果
+setInterval(() => {
+    if (!isDetecting) return;
+
+    fetch('/api/detection_results')
+        .then(response => response.json())
+        .then(data => {
+            if (data.count !== undefined) {
+                document.getElementById('vehicle-count').style.display = 'block';
+                document.querySelector('#vehicle-count .stat-value').textContent = data.count;
+            }
+        });
+}, 1000);
+</script>
+{% endblock %}

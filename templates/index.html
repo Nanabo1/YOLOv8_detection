@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* 首页容器 - 2行4列网格布局 */
+    .index-container {
+        display: grid;
+        grid-template-rows: 1fr 1fr;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.2rem;
+        min-height: calc(100vh - 6rem);
+        padding: 0.5rem 0;
+    }
+
+    /* 所有卡片通用样式 */
+    .grid-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s;
+        display: flex;
+        flex-direction: column;
+        animation: fadeIn 0.5s ease-out;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .grid-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(102, 126, 234, 0.25);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* 天气卡片 - 特殊样式 */
+    .weather-card {
+        grid-row: 1 / 2;
+        grid-column: 1 / 3;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .weather-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .weather-header i {
+        font-size: 2.5rem;
+    }
+
+    .weather-header h3 {
+        font-size: 1.5rem;
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .weather-info {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        flex: 1;
+    }
+
+    .weather-item {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 16px;
+        padding: 1.2rem 1rem;
+        text-align: center;
+        backdrop-filter: blur(5px);
+        transition: all 0.3s;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .weather-item:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-3px);
+    }
+
+    .weather-temp {
+        font-size: 2.5rem;
+        font-weight: bold;
+        line-height: 1.2;
+        margin-bottom: 0.3rem;
+    }
+
+    .weather-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 0.3rem;
+    }
+
+    .weather-label {
+        font-size: 0.85rem;
+        opacity: 0.9;
+    }
+
+    /* 车辆识别卡片 */
+    .car-card {
+        grid-row: 1 / 2;
+        grid-column: 3 / 4;
+        animation-delay: 0.1s;
+    }
+
+    /* 速度检测卡片 */
+    .speed-card {
+        grid-row: 1 / 2;
+        grid-column: 4 / 5;
+        animation-delay: 0.15s;
+    }
+
+    /* 历史记录卡片 */
+    .history-card {
+        grid-row: 2 / 3;
+        grid-column: 1 / 2;
+        animation-delay: 0.2s;
+    }
+
+    /* 数据统计卡片 */
+    .stats-card {
+        grid-row: 2 / 3;
+        grid-column: 2 / 3;
+        animation-delay: 0.25s;
+    }
+
+    /* 系统设置卡片 */
+    .settings-card {
+        grid-row: 2 / 3;
+        grid-column: 3 / 4;
+        animation-delay: 0.3s;
+    }
+
+    /* 卡片图标 */
+    .card-icon {
+        font-size: 2.2rem;
+        color: var(--primary-color);
+        margin-bottom: 1.2rem;
+    }
+
+    /* 卡片标题 */
+    .card-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+    }
+
+    /* 卡片描述 */
+    .card-description {
+        color: var(--text-secondary);
+        line-height: 1.5;
+        font-size: 0.95rem;
+        flex: 1;
+        margin-bottom: 1.5rem;
+    }
+
+    /* 卡片按钮 */
+    .card-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.7rem 1.2rem;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 10px;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 0.95rem;
+        width: fit-content;
+        margin-top: auto;
+    }
+
+    .card-btn i {
+        margin-right: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .card-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 1200px) {
+        .index-container {
+            gap: 1rem;
+        }
+
+        .weather-info {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 992px) {
+        .index-container {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: auto;
+        }
+
+        .weather-card {
+            grid-row: auto;
+            grid-column: span 2;
+        }
+
+        .car-card, .speed-card, .history-card, .stats-card, .settings-card, .ai-card {
+            grid-row: auto;
+            grid-column: span 1;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .index-container {
+            grid-template-columns: 1fr;
+        }
+
+        .weather-card {
+            grid-column: span 1;
+        }
+
+        .car-card, .speed-card, .history-card, .stats-card, .settings-card, .ai-card {
+            grid-column: span 1;
+        }
+
+        .weather-info {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .index-container {
+            gap: 0.8rem;
+        }
+
+        .grid-card {
+            padding: 1.2rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+        }
+
+        .weather-temp {
+            font-size: 2rem;
+        }
+    }
+
+    /* 加载动画 */
+    .loading-dots:after {
+        content: '.';
+        animation: dots 1.5s steps(5, end) infinite;
+    }
+
+    @keyframes dots {
+        0%, 20% { content: '.'; }
+        40% { content: '..'; }
+        60% { content: '...'; }
+        80%, 100% { content: ''; }
+    }
+</style>
+
+<div class="index-container">
+    <!-- 第一行：天气卡片（占2列） -->
+    <div class="grid-card weather-card">
+        <div class="weather-header">
+            <i class="fas fa-cloud-sun"></i>
+            <h3>天气信息</h3>
+        </div>
+        <div class="weather-info">
+            <div class="weather-item">
+                <div class="weather-temp">{{ weather.temp }}°C</div>
+                <div class="weather-label">温度</div>
+            </div>
+            <div class="weather-item">
+                <div class="weather-value">{{ weather.text }}</div>
+                <div class="weather-label">天气状况</div>
+            </div>
+            <div class="weather-item">
+                <div class="weather-value">{{ weather.windDir }}</div>
+                <div class="weather-label">风向</div>
+            </div>
+            <div class="weather-item">
+                <div class="weather-value">{{ weather.windScale }}级</div>
+                <div class="weather-label">风力</div>
+            </div>
+            <div class="weather-item">
+                <div class="weather-value">{{ weather.humidity }}%</div>
+                <div class="weather-label">湿度</div>
+            </div>
+            <div class="weather-item">
+                <div class="weather-value">{{ weather.city }}</div>
+                <div class="weather-label">城市</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 第一行：车辆识别卡片（占1列） -->
+    <div class="grid-card car-card">
+        <div class="card-icon">
+            <i class="fas fa-car"></i>
+        </div>
+        <h3 class="card-title">车辆识别</h3>
+        <p class="card-description">实时检测视频中的车辆，支持多种输入源，自动识别车辆类型并分配唯一ID。</p>
+        <a href="/detect" class="card-btn">
+            <i class="fas fa-play"></i> 进入识别
+        </a>
+    </div>
+
+    <!-- 第一行：速度检测卡片（占1列） -->
+    <div class="grid-card speed-card">
+        <div class="card-icon">
+            <i class="fas fa-tachometer-alt"></i>
+        </div>
+        <h3 class="card-title">速度检测</h3>
+        <p class="card-description">实时计算每辆车的速度，统计最快、最慢和平均速度，并保存到数据库。</p>
+        <a href="/detect_speed" class="card-btn">
+            <i class="fas fa-play"></i> 进入测速
+        </a>
+    </div>
+
+    <!-- 第二行：历史记录卡片（占1列） -->
+    <div class="grid-card history-card">
+        <div class="card-icon">
+            <i class="fas fa-history"></i>
+        </div>
+        <h3 class="card-title">历史记录</h3>
+        <p class="card-description">查看所有检测记录，包括车辆ID、速度、时间等信息，支持数据筛选和导出。</p>
+        <a href="/history" class="card-btn">
+            <i class="fas fa-history"></i> 查看记录
+        </a>
+    </div>
+
+    <!-- 第二行：数据统计卡片（占1列） -->
+    <div class="grid-card stats-card">
+        <div class="card-icon">
+            <i class="fas fa-chart-pie"></i>
+        </div>
+        <h3 class="card-title">数据统计</h3>
+        <p class="card-description">通过图表直观展示车辆类型分布、速度分布等统计信息，支持数据分析。</p>
+        <a href="/charts" class="card-btn">
+            <i class="fas fa-chart-bar"></i> 查看统计
+        </a>
+    </div>
+
+    <!-- 第二行：系统设置卡片（占1列） -->
+    <div class="grid-card settings-card">
+        <div class="card-icon">
+            <i class="fas fa-cog"></i>
+        </div>
+        <h3 class="card-title">系统设置</h3>
+        <p class="card-description">配置检测参数、速度计算系数、数据库保留时间等系统选项。</p>
+        <a href="/settings" class="card-btn">
+            <i class="fas fa-cog"></i> 系统设置
+        </a>
+    </div>
+</div>
+
+<script>
+</script>
+{% endblock %}

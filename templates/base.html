@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能车辆识别跟踪系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 背景动图 - 科技感线条动画 */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(125deg, #0a0f1e 0%, #1a1f35 50%, #0a0f1e 100%);
+            overflow: hidden;
+        }
+
+        .background-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+            animation: rotate 30s linear infinite;
+        }
+
+        .background-animation::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M10 10 L90 10 M10 30 L90 30 M10 50 L90 50 M10 70 L90 70 M10 90 L90 90 M10 10 L10 90 M30 10 L30 90 M50 10 L50 90 M70 10 L70 90 M90 10 L90 90" stroke="rgba(102,126,234,0.05)" stroke-width="1"/></svg>');
+            opacity: 0.3;
+            animation: move 60s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes move {
+            from { transform: translate(0, 0); }
+            to { transform: translate(50px, 50px); }
+        }
+
+        /* 左侧导航栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s;
+            border-right: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .nav-menu {
+            flex: 1;
+            list-style: none;
+            padding: 1.5rem 0;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            margin: 0.3rem 1rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1.2rem;
+            color: #333;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .nav-link i {
+            width: 24px;
+            margin-right: 0.8rem;
+            font-size: 1.1rem;
+            color: #667eea;
+        }
+
+        .nav-link:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-link:hover i {
+            color: white;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .nav-link.active i {
+            color: white;
+        }
+
+        /* 用户信息区域 */
+        .user-info {
+            padding: 1.2rem 1.5rem;
+            border-top: 1px solid rgba(102, 126, 234, 0.2);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .user-details {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .user-text {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.95rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .user-role-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .user-role-badge.admin {
+            background: #fbbf24;
+            color: #744210;
+        }
+
+        .user-role-badge.user {
+            background: #48bb78;
+            color: white;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.6rem;
+            background: #f56565;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(245, 101, 101, 0.3);
+        }
+
+        .sidebar-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(102, 126, 234, 0.2);
+            font-size: 0.8rem;
+            color: #718096;
+            text-align: center;
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            padding: 2rem;
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 闪现消息 */
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 350px;
+        }
+
+        .flash-message {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .flash-message.success {
+            background: #48bb78;
+        }
+
+        .flash-message.error {
+            background: #f56565;
+        }
+
+        .flash-message.warning {
+            background: #ed8936;
+        }
+
+        .flash-message.info {
+            background: #4299e1;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+                overflow: hidden;
+            }
+
+            .sidebar-header h2,
+            .sidebar-header p,
+            .nav-link span,
+            .user-text,
+            .logout-btn span,
+            .sidebar-footer {
+                display: none;
+            }
+
+            .nav-link {
+                justify-content: center;
+                padding: 1rem;
+            }
+
+            .nav-link i {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
+
+            .user-info {
+                padding: 1rem;
+            }
+
+            .user-details {
+                justify-content: center;
+            }
+
+            .main-content {
+                margin-left: 80px;
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 0;
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .sidebar-toggle {
+                display: block;
+                position: fixed;
+                top: 1rem;
+                left: 1rem;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 0.5rem 1rem;
+                border-radius: 5px;
+                z-index: 1002;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景动图 -->
+    <div class="background-animation"></div>
+
+    <!-- 闪现消息 -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-exclamation-circle{% elif category == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- 左侧导航栏 -->
+    <div class="sidebar">
+        <div class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </div>
+        <div class="sidebar-header">
+            <i class="fas fa-car" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
+            <h2>智能车辆识别</h2>
+            <p>跟踪与测速系统</p>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                    <i class="fas fa-home"></i>
+                    <span>首页</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/detect" class="nav-link {% if request.path == '/detect' %}active{% endif %}">
+                    <i class="fas fa-video"></i>
+                    <span>车辆识别</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/detect_speed" class="nav-link {% if request.path == '/detect_speed' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>速度检测</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/history" class="nav-link {% if request.path == '/history' %}active{% endif %}">
+                    <i class="fas fa-history"></i>
+                    <span>历史记录</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/charts" class="nav-link {% if request.path == '/charts' %}active{% endif %}">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>数据统计</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/settings" class="nav-link {% if request.path == '/settings' %}active{% endif %}">
+                    <i class="fas fa-cog"></i>
+                    <span>系统设置</span>
+                </a>
+            </li>
+            {% if session.get('user_role') == 'admin' %}
+            <li class="nav-item">
+                <a href="/admin/users" class="nav-link {% if request.path == '/admin/users' %}active{% endif %}">
+                    <i class="fas fa-user-shield"></i>
+                    <span>用户管理</span>
+                </a>
+            </li>
+            {% endif %}
+            <li class="nav-item">
+                <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}">
+                    <i class="fas fa-info-circle"></i>
+                    <span>关于我们</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- 用户信息区域 -->
+        {% if session.get('user_id') %}
+        <div class="user-info">
+            <div class="user-details">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-text">
+                    <div class="user-name">{{ session.get('username') }}</div>
+                    <span class="user-role-badge {% if session.get('user_role') == 'admin' %}admin{% else %}user{% endif %}">
+                        {% if session.get('user_role') == 'admin' %}
+                            <i class="fas fa-crown"></i> 管理员
+                        {% else %}
+                            <i class="fas fa-user"></i> 普通用户
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+            </a>
+        </div>
+        {% endif %}
+
+        <div class="sidebar-footer">
+            <i class="fas fa-shield-alt"></i>
+            <p>系统安全运行中</p>
+            <p>v1.0.0</p>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (window.innerWidth <= 768) {
+                if (sidebar.style.width === '280px' || sidebar.style.width === '') {
+                    sidebar.style.width = '80px';
+                } else {
+                    sidebar.style.width = '280px';
+                }
+            }
+        }
+
+        window.addEventListener('resize', function() {
+            const sidebar = document.querySelector('.sidebar');
+            if (window.innerWidth > 768) {
+                sidebar.style.width = '280px';
+            } else {
+                sidebar.style.width = '80px';
+            }
+        });
+
+        // 自动隐藏闪现消息
+        setTimeout(function() {
+            const flashMessages = document.querySelector('.flash-messages');
+            if (flashMessages) {
+                flashMessages.style.display = 'none';
+            }
+        }, 5000);
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

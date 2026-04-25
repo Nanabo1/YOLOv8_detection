@@ -1,0 +1,769 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .admin-container {
+        padding: 1rem 0;
+    }
+
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .admin-header h2 {
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .admin-header h2 i {
+        color: var(--primary-color);
+    }
+
+    .admin-stats {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .stat-badge {
+        background: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .stat-badge i {
+        color: var(--primary-color);
+    }
+
+    .admin-actions {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.8rem 1.5rem;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-success {
+        background: #48bb78;
+        color: white;
+    }
+
+    .btn-danger {
+        background: #f56565;
+        color: white;
+    }
+
+    .btn-warning {
+        background: #ed8936;
+        color: white;
+    }
+
+    .btn-info {
+        background: #4299e1;
+        color: white;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .search-box {
+        flex: 1;
+        min-width: 250px;
+        position: relative;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #a0aec0;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 0.8rem 1rem 0.8rem 2.8rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: #f7fafc;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary);
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    td {
+        padding: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        color: var(--text-secondary);
+    }
+
+    tr:hover {
+        background: #f7fafc;
+    }
+
+    .role-badge {
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .role-admin {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .role-user {
+        background: #48bb78;
+        color: white;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-btn {
+        padding: 0.4rem 0.8rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .action-btn.edit {
+        background: #4299e1;
+        color: white;
+    }
+
+    .action-btn.delete {
+        background: #f56565;
+        color: white;
+    }
+
+    .action-btn.promote {
+        background: #ed8936;
+        color: white;
+    }
+
+    .action-btn.reset {
+        background: #48bb78;
+        color: white;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* 模态框 */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .modal-header h3 {
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #a0aec0;
+        transition: color 0.3s;
+    }
+
+    .modal-close:hover {
+        color: #f56565;
+    }
+
+    .modal-body {
+        margin-bottom: 1.5rem;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.2rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.6rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 0.6rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: white;
+    }
+
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        animation: slideIn 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .notification.success {
+        background: #48bb78;
+    }
+
+    .notification.error {
+        background: #f56565;
+    }
+
+    .notification.warning {
+        background: #ed8936;
+    }
+
+    .notification.info {
+        background: #4299e1;
+    }
+
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    @media (max-width: 768px) {
+        .admin-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .action-buttons {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+
+<div class="admin-container">
+    <div class="admin-header">
+        <h2>
+            <i class="fas fa-user-shield"></i>
+            用户管理
+        </h2>
+        <div class="admin-stats">
+            <div class="stat-badge">
+                <i class="fas fa-users"></i>
+                <span id="total-users">0</span> 总用户
+            </div>
+            <div class="stat-badge">
+                <i class="fas fa-user-tie"></i>
+                <span id="total-admins">0</span> 管理员
+            </div>
+            <div class="stat-badge">
+                <i class="fas fa-user"></i>
+                <span id="total-regular">0</span> 普通用户
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-actions">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="search-input" placeholder="搜索用户名..." onkeyup="searchUsers()">
+        </div>
+        <button class="btn btn-success" onclick="showAddUserModal()">
+            <i class="fas fa-user-plus"></i> 添加用户
+        </button>
+        <button class="btn btn-primary" onclick="refreshUsers()">
+            <i class="fas fa-sync-alt"></i> 刷新
+        </button>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>用户名</th>
+                    <th>角色</th>
+                    <th>创建时间</th>
+                    <th>最后登录</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="users-table-body">
+                <tr>
+                    <td colspan="6" style="text-align: center;">加载中...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 添加用户模态框 -->
+<div id="addUserModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-user-plus"></i> 添加新用户</h3>
+            <button class="modal-close" onclick="closeModal('addUserModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="new-username" class="form-control" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="text" id="new-password" class="form-control" value="123456" placeholder="默认密码: 123456">
+            </div>
+            <div class="form-group">
+                <label>角色</label>
+                <select id="new-role" class="form-select">
+                    <option value="user">普通用户</option>
+                    <option value="admin">管理员</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-danger" onclick="closeModal('addUserModal')">取消</button>
+            <button class="btn btn-success" onclick="addUser()">添加</button>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑用户模态框 -->
+<div id="editUserModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-edit"></i> 编辑用户</h3>
+            <button class="modal-close" onclick="closeModal('editUserModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="edit-user-id">
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="edit-username" class="form-control" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label>新密码（留空则不修改）</label>
+                <input type="password" id="edit-password" class="form-control" placeholder="请输入新密码">
+            </div>
+            <div class="form-group">
+                <label>角色</label>
+                <select id="edit-role" class="form-select">
+                    <option value="user">普通用户</option>
+                    <option value="admin">管理员</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-danger" onclick="closeModal('editUserModal')">取消</button>
+            <button class="btn btn-success" onclick="updateUser()">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let users = [];
+let currentUserId = null;
+
+// 页面加载时获取用户列表
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsers();
+});
+
+// 加载用户列表
+function loadUsers() {
+    fetch('/api/admin/users')
+        .then(response => response.json())
+        .then(data => {
+            users = data;
+            renderUsers(data);
+            updateStats(data);
+        })
+        .catch(error => {
+            console.error('加载用户失败:', error);
+            showNotification('error', '加载用户失败');
+        });
+}
+
+// 渲染用户表格
+function renderUsers(users) {
+    const tbody = document.getElementById('users-table-body');
+
+    if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">暂无用户</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = users.map(user => `
+        <tr>
+            <td>${user.id}</td>
+            <td>${user.username}</td>
+            <td>
+                <span class="role-badge ${user.role === 'admin' ? 'role-admin' : 'role-user'}">
+                    ${user.role === 'admin' ? '管理员' : '普通用户'}
+                </span>
+            </td>
+            <td>${user.created_at || '--'}</td>
+            <td>${user.last_login || '--'}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="action-btn edit" onclick="editUser(${user.id})">
+                        <i class="fas fa-edit"></i> 编辑
+                    </button>
+                    ${user.role === 'user' ? `
+                        <button class="action-btn promote" onclick="promoteUser(${user.id})">
+                            <i class="fas fa-arrow-up"></i> 升级
+                        </button>
+                    ` : ''}
+                    <button class="action-btn reset" onclick="resetPassword(${user.id})">
+                        <i class="fas fa-key"></i> 重置密码
+                    </button>
+                    <button class="action-btn delete" onclick="deleteUser(${user.id})">
+                        <i class="fas fa-trash"></i> 删除
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// 更新统计信息
+function updateStats(users) {
+    const total = users.length;
+    const admins = users.filter(u => u.role === 'admin').length;
+    const regular = total - admins;
+
+    document.getElementById('total-users').textContent = total;
+    document.getElementById('total-admins').textContent = admins;
+    document.getElementById('total-regular').textContent = regular;
+}
+
+// 搜索用户
+function searchUsers() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const filtered = users.filter(user =>
+        user.username.toLowerCase().includes(searchTerm)
+    );
+    renderUsers(filtered);
+}
+
+// 刷新用户列表
+function refreshUsers() {
+    loadUsers();
+    showNotification('info', '正在刷新...');
+}
+
+// 显示添加用户模态框
+function showAddUserModal() {
+    document.getElementById('addUserModal').classList.add('active');
+}
+
+// 关闭模态框
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+// 添加用户
+function addUser() {
+    const username = document.getElementById('new-username').value;
+    const password = document.getElementById('new-password').value;
+    const role = document.getElementById('new-role').value;
+
+    if (!username) {
+        showNotification('error', '用户名不能为空');
+        return;
+    }
+
+    fetch('/api/admin/users', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username, password, role})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message);
+            closeModal('addUserModal');
+            loadUsers();
+            document.getElementById('new-username').value = '';
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(error => {
+        showNotification('error', '添加失败: ' + error.message);
+    });
+}
+
+// 编辑用户
+function editUser(userId) {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
+    currentUserId = userId;
+    document.getElementById('edit-user-id').value = user.id;
+    document.getElementById('edit-username').value = user.username;
+    document.getElementById('edit-role').value = user.role;
+    document.getElementById('edit-password').value = '';
+
+    document.getElementById('editUserModal').classList.add('active');
+}
+
+// 更新用户
+function updateUser() {
+    const userId = document.getElementById('edit-user-id').value;
+    const username = document.getElementById('edit-username').value;
+    const password = document.getElementById('edit-password').value;
+    const role = document.getElementById('edit-role').value;
+
+    if (!username) {
+        showNotification('error', '用户名不能为空');
+        return;
+    }
+
+    const data = {username, role};
+    if (password) {
+        data.password = password;
+    }
+
+    fetch(`/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message);
+            closeModal('editUserModal');
+            loadUsers();
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(error => {
+        showNotification('error', '更新失败: ' + error.message);
+    });
+}
+
+// 删除用户
+function deleteUser(userId) {
+    if (!confirm('确定要删除这个用户吗？此操作不可恢复！')) {
+        return;
+    }
+
+    fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message);
+            loadUsers();
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(error => {
+        showNotification('error', '删除失败: ' + error.message);
+    });
+}
+
+// 提升用户为管理员
+function promoteUser(userId) {
+    if (!confirm('确定要将该用户提升为管理员吗？')) {
+        return;
+    }
+
+    fetch(`/api/admin/users/${userId}/promote`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message);
+            loadUsers();
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(error => {
+        showNotification('error', '提升失败: ' + error.message);
+    });
+}
+
+// 重置密码
+function resetPassword(userId) {
+    if (!confirm('确定要重置该用户的密码为 123456 吗？')) {
+        return;
+    }
+
+    fetch(`/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({reset_password: true})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', '密码已重置为 123456');
+            loadUsers();
+        } else {
+            showNotification('error', data.message);
+        }
+    })
+    .catch(error => {
+        showNotification('error', '重置失败: ' + error.message);
+    });
+}
+
+// 显示通知
+function showNotification(type, message) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+        ${message}
+    `;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

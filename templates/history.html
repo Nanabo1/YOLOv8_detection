@@ -1,0 +1,1061 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* 历史记录页面样式 */
+    .history-section {
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .history-section h2 {
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.8rem;
+    }
+
+    /* 统计卡片 */
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .stat-card:hover::before {
+        opacity: 1;
+    }
+
+    .stat-card h5 {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 2.2rem;
+        font-weight: bold;
+        line-height: 1.2;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-top: 0.5rem;
+    }
+
+    /* 标签页按钮 */
+    .tab-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .tab-btn {
+        padding: 0.8rem 1.5rem;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: white;
+        color: var(--text-primary);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-btn i {
+        font-size: 1.1rem;
+    }
+
+    .tab-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    /* 表格容器 */
+    .table-container {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .table-header h3 {
+        color: var(--text-primary);
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .table-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn {
+        padding: 0.6rem 1.2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-success {
+        background: #48bb78;
+        color: white;
+    }
+
+    .btn-danger {
+        background: #f56565;
+        color: white;
+    }
+
+    .btn-info {
+        background: #4299e1;
+        color: white;
+    }
+
+    .btn-warning {
+        background: #ed8936;
+        color: white;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn:disabled {
+        opacity: 0.5;
+        transform: none;
+        cursor: not-allowed;
+    }
+
+    /* 表格样式 */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th {
+        background: #f7fafc;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-primary);
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    td {
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        color: var(--text-secondary);
+    }
+
+    tr:hover {
+        background: #f7fafc;
+    }
+
+    /* 日志级别标签 */
+    .log-level {
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .log-level-info {
+        background: #c6f6d5;
+        color: #22543d;
+    }
+
+    .log-level-warning {
+        background: #feebc8;
+        color: #744210;
+    }
+
+    .log-level-error {
+        background: #fed7d7;
+        color: #742a2a;
+    }
+
+    .log-level-test {
+        background: #e9d8fd;
+        color: #44337a;
+    }
+
+    /* 角色徽章样式 */
+    .role-badge {
+        display: inline-block;
+        padding: 0.2rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .role-badge.admin {
+        background: #fbbf24;
+        color: #744210;
+    }
+
+    .role-badge.user {
+        background: #48bb78;
+        color: white;
+    }
+
+    .role-badge.system {
+        background: #a0aec0;
+        color: white;
+    }
+
+    .role-badge i {
+        margin-right: 0.2rem;
+        font-size: 0.7rem;
+    }
+
+    /* 加载动画 */
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* 通知提示 */
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        animation: slideIn 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .notification.success {
+        background: #48bb78;
+    }
+
+    .notification.error {
+        background: #f56565;
+    }
+
+    .notification.warning {
+        background: #ed8936;
+    }
+
+    .notification.info {
+        background: #4299e1;
+    }
+
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+
+    /* 空状态 */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #a0aec0;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    /* 刷新控件 */
+    .refresh-control {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+        background: #f7fafc;
+        border-radius: 10px;
+    }
+
+    .auto-refresh {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .camera-select {
+        padding: 0.4rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.9rem;
+    }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+        .stats-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .table-header {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .table-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .tab-buttons {
+            flex-direction: column;
+        }
+
+        .tab-btn {
+            width: 100%;
+        }
+
+        table {
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.6rem;
+        }
+    }
+</style>
+
+<div class="history-section">
+    <h2>
+        <i class="fas fa-history" style="color: #667eea;"></i>
+        历史记录
+    </h2>
+
+    <!-- 刷新控制 -->
+    <div class="refresh-control">
+        <div class="auto-refresh">
+            <i class="fas fa-sync-alt" id="refresh-icon" style="color: #667eea;"></i>
+            <span>自动刷新: </span>
+            <select id="refresh-interval" class="camera-select" style="width: 100px;">
+                <option value="0">关闭</option>
+                <option value="5">5秒</option>
+                <option value="10" selected>10秒</option>
+                <option value="30">30秒</option>
+                <option value="60">60秒</option>
+            </select>
+        </div>
+        <div>
+            <span id="last-update">最后更新: 刚刚</span>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <h5><i class="fas fa-database"></i> 总记录数</h5>
+            <div class="stat-value" id="total-records">0</div>
+            <div class="stat-label">所有时间</div>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <h5><i class="fas fa-calendar-day"></i> 今日记录</h5>
+            <div class="stat-value" id="today-records">0</div>
+            <div class="stat-label">今天</div>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <h5><i class="fas fa-tachometer-alt"></i> 平均速度</h5>
+            <div class="stat-value" id="avg-speed">0 km/h</div>
+            <div class="stat-label">所有车辆</div>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <h5><i class="fas fa-clock"></i> 最后记录</h5>
+            <div class="stat-value" id="last-record">--:--</div>
+            <div class="stat-label">最新时间</div>
+        </div>
+    </div>
+
+    <!-- 标签页切换 -->
+    <div class="tab-buttons">
+        <button class="tab-btn active" onclick="showTab('records')" id="tab-records-btn">
+            <i class="fas fa-car"></i> 车辆记录
+        </button>
+        <button class="tab-btn" onclick="showTab('stats')" id="tab-stats-btn">
+            <i class="fas fa-chart-line"></i> 速度统计
+        </button>
+        <button class="tab-btn" onclick="showTab('logs')" id="tab-logs-btn">
+            <i class="fas fa-list"></i> 系统日志
+        </button>
+    </div>
+
+    <!-- 车辆记录表格 -->
+    <div id="records-tab" class="tab-content">
+        <div class="table-container">
+            <div class="table-header">
+                <h3><i class="fas fa-car" style="color: #667eea;"></i> 车辆速度记录</h3>
+                <div class="table-actions">
+                    <button class="btn btn-success btn-sm" onclick="exportToCSV('records')">
+                        <i class="fas fa-download"></i> 导出CSV
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="refreshData('records')">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>车辆ID</th>
+                            <th>速度 (km/h)</th>
+                            <th>车辆类型</th>
+                            <th>检测时间</th>
+                            <th>位置</th>
+                        </tr>
+                    </thead>
+                    <tbody id="records-table-body">
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-car"></i>
+                                <p>加载中...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 速度统计表格 -->
+    <div id="stats-tab" class="tab-content" style="display: none;">
+        <div class="table-container">
+            <div class="table-header">
+                <h3><i class="fas fa-chart-line" style="color: #667eea;"></i> 速度统计信息</h3>
+                <div class="table-actions">
+                    <button class="btn btn-success btn-sm" onclick="exportToCSV('stats')">
+                        <i class="fas fa-download"></i> 导出CSV
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="refreshData('stats')">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>车辆ID</th>
+                            <th>最高速度</th>
+                            <th>最低速度</th>
+                            <th>平均速度</th>
+                            <th>统计时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-table-body">
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-chart-line"></i>
+                                <p>加载中...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统日志表格 - 增加用户角色列 -->
+    <div id="logs-tab" class="tab-content" style="display: none;">
+        <div class="table-container">
+            <div class="table-header">
+                <h3><i class="fas fa-list" style="color: #667eea;"></i> 系统日志</h3>
+                <div class="table-actions">
+                    <button class="btn btn-success btn-sm" onclick="exportToCSV('logs')">
+                        <i class="fas fa-download"></i> 导出CSV
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="refreshData('logs')">
+                        <i class="fas fa-sync-alt"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>级别</th>
+                            <th>用户</th>
+                            <th>角色</th>
+                            <th>消息</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-table-body">
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-list"></i>
+                                <p>加载中...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据刷新控制 -->
+    <div style="margin-top: 2rem; text-align: center; display: flex; gap: 1rem; justify-content: center;">
+        <button class="btn btn-primary" onclick="loadAllData()">
+            <i class="fas fa-sync-alt"></i> 刷新所有数据
+        </button>
+        <button class="btn btn-danger" onclick="clearAllData()">
+            <i class="fas fa-trash"></i> 清空所有数据
+        </button>
+        <button class="btn btn-warning" onclick="cleanOldData()">
+            <i class="fas fa-broom"></i> 清理过期数据
+        </button>
+    </div>
+</div>
+
+<script>
+let currentTab = 'records';
+let refreshInterval = null;
+let lastUpdateTime = Date.now();
+
+// 页面加载完成后执行
+document.addEventListener('DOMContentLoaded', function() {
+    loadAllData();
+    setupAutoRefresh();
+});
+
+// 设置自动刷新
+function setupAutoRefresh() {
+    const intervalSelect = document.getElementById('refresh-interval');
+    intervalSelect.addEventListener('change', function() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+            refreshInterval = null;
+        }
+
+        const seconds = parseInt(this.value);
+        if (seconds > 0) {
+            refreshInterval = setInterval(() => {
+                refreshCurrentTab();
+                updateLastUpdateTime();
+            }, seconds * 1000);
+            showNotification('info', `自动刷新已开启 (${seconds}秒)`);
+        } else {
+            showNotification('info', '自动刷新已关闭');
+        }
+    });
+}
+
+// 更新最后更新时间
+function updateLastUpdateTime() {
+    lastUpdateTime = Date.now();
+    document.getElementById('last-update').textContent = '最后更新: 刚刚';
+}
+
+// 刷新当前标签页
+function refreshCurrentTab() {
+    if (currentTab === 'records') {
+        loadVehicleRecords();
+    } else if (currentTab === 'stats') {
+        loadSpeedStats();
+    } else if (currentTab === 'logs') {
+        loadSystemLogs();
+    }
+}
+
+// 显示标签页
+function showTab(tabName) {
+    currentTab = tabName;
+
+    // 更新按钮样式
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.getElementById(`tab-${tabName}-btn`).classList.add('active');
+
+    // 显示对应的内容
+    document.getElementById('records-tab').style.display = tabName === 'records' ? 'block' : 'none';
+    document.getElementById('stats-tab').style.display = tabName === 'stats' ? 'block' : 'none';
+    document.getElementById('logs-tab').style.display = tabName === 'logs' ? 'block' : 'none';
+
+    // 加载对应数据
+    refreshCurrentTab();
+}
+
+// 刷新指定数据
+function refreshData(type) {
+    if (type === 'records') {
+        loadVehicleRecords();
+    } else if (type === 'stats') {
+        loadSpeedStats();
+    } else if (type === 'logs') {
+        loadSystemLogs();
+    }
+    updateLastUpdateTime();
+}
+
+// 加载所有数据
+function loadAllData() {
+    showLoading();
+    Promise.all([
+        loadVehicleRecords(),
+        loadSpeedStats(),
+        loadSystemLogs(),
+        updateStatistics()
+    ]).then(() => {
+        hideLoading();
+        updateLastUpdateTime();
+        showNotification('success', '数据刷新成功');
+    }).catch(error => {
+        hideLoading();
+        showNotification('error', '数据刷新失败: ' + error.message);
+    });
+}
+
+// 显示加载中
+function showLoading() {
+    document.getElementById('refresh-icon').classList.add('fa-spin');
+}
+
+// 隐藏加载中
+function hideLoading() {
+    document.getElementById('refresh-icon').classList.remove('fa-spin');
+}
+
+// 更新统计信息
+function updateStatistics() {
+    return fetch('/api/vehicle_records')
+        .then(response => {
+            if (!response.ok) throw new Error('网络响应错误');
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('total-records').textContent = data.length;
+
+            // 计算今日记录
+            const today = new Date().toDateString();
+            const todayRecords = data.filter(r => new Date(r.timestamp).toDateString() === today).length;
+            document.getElementById('today-records').textContent = todayRecords;
+
+            // 计算平均速度
+            const speeds = data.filter(r => r.speed).map(r => r.speed);
+            if (speeds.length > 0) {
+                const avgSpeed = speeds.reduce((a, b) => a + b, 0) / speeds.length;
+                document.getElementById('avg-speed').textContent = avgSpeed.toFixed(1) + ' km/h';
+            } else {
+                document.getElementById('avg-speed').textContent = '0 km/h';
+            }
+
+            // 最后记录时间
+            if (data.length > 0) {
+                const lastRecord = new Date(data[0].timestamp);
+                document.getElementById('last-record').textContent =
+                    lastRecord.toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'});
+            } else {
+                document.getElementById('last-record').textContent = '--:--';
+            }
+        })
+        .catch(error => {
+            console.error('更新统计失败:', error);
+            throw error;
+        });
+}
+
+// 加载车辆记录
+function loadVehicleRecords() {
+    const tbody = document.getElementById('records-table-body');
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="loading-spinner"></div><p>加载中...</p></td></tr>';
+
+    return fetch('/api/vehicle_records')
+        .then(response => {
+            if (!response.ok) throw new Error('网络响应错误');
+            return response.json();
+        })
+        .then(data => {
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-car"></i><p>暂无数据</p></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(record => {
+                const speedColor = record.speed < 60 ? '#48bb78' : (record.speed < 80 ? '#ed8936' : '#f56565');
+                return `
+                    <tr>
+                        <td>${record.id}</td>
+                        <td>${record.vehicle_id}</td>
+                        <td style="color: ${speedColor}; font-weight: bold;">${record.speed ? record.speed.toFixed(1) + ' km/h' : '--'}</td>
+                        <td>${record.vehicle_type || '--'}</td>
+                        <td>${record.timestamp}</td>
+                        <td>${record.location || '默认位置'}</td>
+                    </tr>
+                `;
+            }).join('');
+        })
+        .catch(error => {
+            console.error('加载车辆记录失败:', error);
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state" style="color: #f56565;"><i class="fas fa-exclamation-circle"></i><p>加载失败</p></td></tr>';
+            throw error;
+        });
+}
+
+// 加载速度统计
+function loadSpeedStats() {
+    const tbody = document.getElementById('stats-table-body');
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="loading-spinner"></div><p>加载中...</p></td></tr>';
+
+    return fetch('/api/speed_stats')
+        .then(response => {
+            if (!response.ok) throw new Error('网络响应错误');
+            return response.json();
+        })
+        .then(data => {
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-chart-line"></i><p>暂无数据</p></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(stat => `
+                <tr>
+                    <td>${stat.id}</td>
+                    <td>${stat.vehicle_id}</td>
+                    <td style="color: #f56565; font-weight: bold;">${stat.max_speed ? stat.max_speed.toFixed(1) + ' km/h' : '--'}</td>
+                    <td style="color: #48bb78; font-weight: bold;">${stat.min_speed ? stat.min_speed.toFixed(1) + ' km/h' : '--'}</td>
+                    <td style="color: #667eea; font-weight: bold;">${stat.avg_speed ? stat.avg_speed.toFixed(1) + ' km/h' : '--'}</td>
+                    <td>${stat.timestamp}</td>
+                </tr>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('加载速度统计失败:', error);
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state" style="color: #f56565;"><i class="fas fa-exclamation-circle"></i><p>加载失败</p></td></tr>';
+            throw error;
+        });
+}
+
+// 加载系统日志 - 增加用户角色显示
+function loadSystemLogs() {
+    const tbody = document.getElementById('logs-table-body');
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="loading-spinner"></div><p>加载中...</p></td></tr>';
+
+    return fetch('/api/database_logs')
+        .then(response => {
+            if (!response.ok) throw new Error('网络响应错误');
+            return response.json();
+        })
+        .then(data => {
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-list"></i><p>暂无数据</p></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(log => {
+                let levelClass = 'log-level-info';
+                if (log.log_level === 'WARNING') levelClass = 'log-level-warning';
+                else if (log.log_level === 'ERROR') levelClass = 'log-level-error';
+                else if (log.log_level === 'TEST') levelClass = 'log-level-test';
+
+                // 角色徽章
+                let roleBadge = '';
+                if (log.user_role === 'admin') {
+                    roleBadge = '<span class="role-badge admin"><i class="fas fa-crown"></i> 管理员</span>';
+                } else if (log.user_role === 'user') {
+                    roleBadge = '<span class="role-badge user"><i class="fas fa-user"></i> 普通用户</span>';
+                } else {
+                    roleBadge = '<span class="role-badge system">系统</span>';
+                }
+
+                return `
+                    <tr>
+                        <td>${log.id}</td>
+                        <td><span class="log-level ${levelClass}">${log.log_level}</span></td>
+                        <td>${log.username || '系统'}</td>
+                        <td>${roleBadge}</td>
+                        <td>${log.message}</td>
+                        <td>${log.timestamp}</td>
+                    </tr>
+                `;
+            }).join('');
+        })
+        .catch(error => {
+            console.error('加载系统日志失败:', error);
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state" style="color: #f56565;"><i class="fas fa-exclamation-circle"></i><p>加载失败</p></td></tr>';
+            throw error;
+        });
+}
+
+// 导出CSV - 更新日志导出格式
+function exportToCSV(type) {
+    let url = '';
+    let filename = '';
+    let headers = [];
+
+    if (type === 'records') {
+        url = '/api/vehicle_records';
+        filename = 'vehicle_records.csv';
+        headers = ['ID', '车辆ID', '速度(km/h)', '类型', '时间', '位置'];
+    } else if (type === 'stats') {
+        url = '/api/speed_stats';
+        filename = 'speed_stats.csv';
+        headers = ['ID', '车辆ID', '最高速度', '最低速度', '平均速度', '时间'];
+    } else if (type === 'logs') {
+        url = '/api/database_logs';
+        filename = 'system_logs.csv';
+        headers = ['ID', '级别', '用户', '角色', '消息', '时间'];
+    }
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.length === 0) {
+                showNotification('warning', '没有数据可导出');
+                return;
+            }
+
+            // 转换为CSV
+            const csvContent = [
+                headers.join(','),
+                ...data.map(row => {
+                    if (type === 'logs') {
+                        return [
+                            row.id,
+                            row.log_level,
+                            row.username || '系统',
+                            row.user_role || 'system',
+                            `"${row.message.replace(/"/g, '""')}"`,
+                            row.timestamp
+                        ].join(',');
+                    } else if (type === 'records') {
+                        return [
+                            row.id,
+                            row.vehicle_id,
+                            row.speed || '',
+                            row.vehicle_type || '',
+                            row.timestamp,
+                            row.location || ''
+                        ].join(',');
+                    } else if (type === 'stats') {
+                        return [
+                            row.id,
+                            row.vehicle_id,
+                            row.max_speed || '',
+                            row.min_speed || '',
+                            row.avg_speed || '',
+                            row.timestamp
+                        ].join(',');
+                    }
+                }).join('\n')
+            ].join('\n');
+
+            // 下载文件
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+
+            showNotification('success', '导出成功');
+        })
+        .catch(error => {
+            showNotification('error', '导出失败: ' + error.message);
+        });
+}
+
+// 清空所有数据
+function clearAllData() {
+    if (!confirm('⚠️ 确定要清空所有数据吗？此操作不可恢复！')) {
+        return;
+    }
+
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 清空中...';
+    btn.disabled = true;
+
+    showLoading();
+
+    fetch('/api/clear_data', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(async response => {
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            if (text.includes('<!doctype html>')) {
+                throw new Error('清空API未实现，请在app.py中添加/api/clear_data路由');
+            }
+            throw new Error(`服务器返回了非JSON数据: ${text.substring(0, 100)}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        hideLoading();
+        if (data.success) {
+            showNotification('success', data.message);
+            loadAllData();
+        } else {
+            showNotification('error', '清空失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        hideLoading();
+        console.error('清空数据失败:', error);
+        showNotification('error', '清空失败: ' + error.message);
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+// 清理过期数据
+function cleanOldData() {
+    if (!confirm('确定要清理过期数据吗？')) {
+        return;
+    }
+
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 清理中...';
+    btn.disabled = true;
+
+    fetch('/api/clean_old_data', {method: 'POST'})
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('success', data.message);
+                loadAllData();
+            } else {
+                showNotification('error', '清理失败: ' + data.message);
+            }
+        })
+        .catch(error => {
+            showNotification('error', '清理失败: ' + error.message);
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+}
+
+// 显示通知
+function showNotification(type, message) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle'}"></i>
+        ${message}
+    `;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// 页面卸载时清理
+window.addEventListener('beforeunload', function() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+});
+</script>
+{% endblock %}
