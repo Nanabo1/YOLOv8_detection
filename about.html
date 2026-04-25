@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    /* 关于我们页面样式 */
+    .about-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        padding: 1rem 0;
+    }
+
+    /* 英雄区域 */
+    .hero-about {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 30px;
+        padding: 2.5rem 2rem;
+        color: white;
+        text-align: center;
+        box-shadow: 0 15px 30px rgba(102, 126, 234, 0.3);
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .hero-about h1 {
+        font-size: 2.2rem;
+        margin-bottom: 0.8rem;
+        font-weight: 700;
+    }
+
+    .hero-about p {
+        font-size: 1.1rem;
+        max-width: 800px;
+        margin: 0 auto;
+        opacity: 0.95;
+        line-height: 1.6;
+    }
+
+    .hero-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    /* 核心技术特点卡片 */
+    .features-about {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 24px;
+        padding: 2rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: fadeIn 0.6s ease-out 0.1s both;
+    }
+
+    .features-about h2 {
+        font-size: 1.8rem;
+        margin-bottom: 2rem;
+        color: var(--text-primary);
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8rem;
+    }
+
+    .features-about h2 i {
+        color: var(--primary-color);
+    }
+
+    .tech-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+
+    .tech-item {
+        text-align: center;
+        padding: 1.5rem 1rem;
+        border-radius: 16px;
+        background: rgba(102, 126, 234, 0.05);
+        transition: all 0.3s;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .tech-item:hover {
+        background: rgba(102, 126, 234, 0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.15);
+        border-color: rgba(102, 126, 234, 0.3);
+    }
+
+    .tech-icon {
+        font-size: 2.2rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .tech-item h4 {
+        font-size: 1.2rem;
+        margin-bottom: 0.6rem;
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .tech-item p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 0.8rem;
+    }
+
+    .tech-version {
+        display: inline-block;
+        padding: 0.2rem 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    /* 技术栈卡片 */
+    .stack-section {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.2rem;
+        animation: fadeIn 0.6s ease-out 0.2s both;
+    }
+
+    .stack-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 1.5rem 1rem;
+        color: white;
+        text-align: center;
+        transition: all 0.3s;
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.2);
+    }
+
+    .stack-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    .stack-icon {
+        font-size: 2.2rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .stack-card h4 {
+        font-size: 1.2rem;
+        margin-bottom: 0.3rem;
+        font-weight: 600;
+    }
+
+    .stack-card p {
+        font-size: 1rem;
+        opacity: 0.95;
+        font-weight: 500;
+    }
+
+    .stack-version {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        margin-top: 0.3rem;
+    }
+
+    /* 底部联系信息 - 简化版 */
+    .contact-footer {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        animation: fadeIn 0.6s ease-out 0.3s both;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .contact-info {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+    }
+
+    .contact-item i {
+        color: var(--primary-color);
+        font-size: 1.1rem;
+    }
+
+    .social-links {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .social-link {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+
+    .social-link:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .copyright {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        padding-top: 0.5rem;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 1200px) {
+        .tech-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 992px) {
+        .stack-section {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .contact-footer {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .contact-info {
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .tech-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stack-section {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-about h1 {
+            font-size: 1.8rem;
+        }
+
+        .contact-info {
+            flex-direction: column;
+            gap: 0.8rem;
+            align-items: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .features-about {
+            padding: 1.5rem;
+        }
+
+        .features-about h2 {
+            font-size: 1.5rem;
+        }
+
+        .tech-item {
+            padding: 1.2rem;
+        }
+    }
+</style>
+
+<div class="about-container">
+    <!-- 英雄区域 -->
+    <div class="hero-about">
+        <div class="hero-icon">
+            <i class="fas fa-robot"></i>
+        </div>
+        <h1>关于我们</h1>
+        <p>智能车辆识别跟踪系统 - 基于YOLOv8s的高效车辆检测与速度分析平台</p>
+    </div>
+
+    <!-- 核心技术特点（6个） -->
+    <div class="features-about">
+        <h2>
+            <i class="fas fa-microchip"></i>
+            <span>核心技术特点</span>
+        </h2>
+        <div class="tech-grid">
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h4>深度学习模型</h4>
+                <p>采用YOLOv8s进行车辆检测，识别准确率高，支持实时处理</p>
+                <span class="tech-version">YOLOv8s</span>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-arrows-alt"></i>
+                </div>
+                <h4>多目标跟踪</h4>
+                <p>为每个车辆分配唯一ID，实现持续跟踪和轨迹记录</p>
+                <span class="tech-version">DeepSORT</span>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-tachometer-alt"></i>
+                </div>
+                <h4>速度计算</h4>
+                <p>基于像素坐标转换，实时计算车辆速度</p>
+                <span class="tech-version">精度 ±5%</span>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <h4>数据存储</h4>
+                <p>MySQL数据库存储检测记录，支持历史查询</p>
+                <span class="tech-version">MySQL 8.0</span>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-cloud-sun"></i>
+                </div>
+                <h4>多源输入</h4>
+                <p>支持摄像头、RTSP流、视频文件等多种输入</p>
+                <span class="tech-version">OpenCV 4.8</span>
+            </div>
+            <div class="tech-item">
+                <div class="tech-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h4>数据可视化</h4>
+                <p>图表展示检测数据，支持速度分布、车型统计</p>
+                <span class="tech-version">Chart.js 4.0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 技术版本卡片 -->
+    <div class="stack-section">
+        <div class="stack-card">
+            <div class="stack-icon">
+                <i class="fab fa-python"></i>
+            </div>
+            <h4>Python</h4>
+            <p>3.9+</p>
+            <div class="stack-version">核心语言</div>
+        </div>
+        <div class="stack-card">
+            <div class="stack-icon">
+                <i class="fas fa-database"></i>
+            </div>
+            <h4>MySQL</h4>
+            <p>8.0</p>
+            <div class="stack-version">数据库</div>
+        </div>
+        <div class="stack-card">
+            <div class="stack-icon">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <h4>Chart.js</h4>
+            <p>4.0</p>
+            <div class="stack-version">可视化</div>
+        </div>
+        <div class="stack-card">
+            <div class="stack-icon">
+                <i class="fas fa-camera"></i>
+            </div>
+            <h4>OpenCV</h4>
+            <p>4.8</p>
+            <div class="stack-version">图像处理</div>
+        </div>
+    </div>
+
+    <!-- 底部联系信息（简化版） -->
+    <div class="contact-footer">
+        <div class="contact-info">
+            <div class="contact-item">
+                <i class="fas fa-envelope"></i>
+                <span>contact@vehicle-system.com</span>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-phone-alt"></i>
+                <span>400-123-4567</span>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>北京市海淀区</span>
+            </div>
+        </div>
+
+        <div class="social-links">
+            <a href="#" class="social-link"><i class="fab fa-github"></i></a>
+            <a href="#" class="social-link"><i class="fab fa-weixin"></i></a>
+            <a href="#" class="social-link"><i class="fab fa-weibo"></i></a>
+        </div>
+    </div>
+
+    <div class="copyright">
+        © 2025 智能车辆识别跟踪系统. 保留所有权利。
+    </div>
+</div>
+{% endblock %}
